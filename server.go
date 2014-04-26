@@ -6,6 +6,7 @@ import (
 	"github.com/go-martini/martini"
 	"io"
 	"net/http"
+	"os"
 )
 
 func main() {
@@ -16,7 +17,38 @@ func main() {
 	m.Get("/hello/:name", greetings)
 	m.Get("/:id", serveImage)
 	m.Get("/:from/:to", addMapping)
+	m.Post("/:id", receiveImage)
 	m.Run()
+}
+
+func receiveImage(res http.ResponseWriter, req *http.Request, params martini.Params) {
+	fmt.Printf("Uploading %s\n", params["id"])
+	file, _, err := req.FormFile("file")
+
+	fmt.Fprintf(res, "/%s.jpg\n", params["id"])
+
+	defer file.Close()
+
+	if err != nil {
+		fmt.Fprintln(res, err)
+		return
+	}
+
+	out, err := os.Create(params["id"] + ".jpg")
+	if err != nil {
+		fmt.Fprintf(res, "Failed to open the file for writing")
+		return
+	}
+
+	defer out.Close()
+
+	_, err = io.Copy(out, file)
+	if err != nil {
+		fmt.Print(res, "Couldn't copy: ")
+		fmt.Fprintln(res, err)
+	}
+
+	fmt.Fprintf(res, "File %s.jpg uploaded successfully.", params["id"])
 }
 
 func addMapping(res http.ResponseWriter, req *http.Request, params martini.Params) {
