@@ -11,7 +11,6 @@ import (
 
 func main() {
 	fmt.Printf("Starting imgur server...\n")
-	populateMap()
 	m := martini.Classic()
 	m.Get("/", displayIndex)
 	m.Get("/hello/:name", greetings)
@@ -44,19 +43,6 @@ func receiveImage(w http.ResponseWriter, req *http.Request, params martini.Param
 func addMapping(res http.ResponseWriter, req *http.Request, params martini.Params) {
 	urlMap[params["from"]] = params["to"]
 	http.Redirect(res, req, "/"+params["from"], http.StatusTemporaryRedirect)
-}
-
-func populateMap() {
-	urlMap["test"] = "k1fctS9.jpg"
-	urlMap["abc"] = "vHV1FRg.jpg"
-	urlMap["def"] = "5na6c1v.jpg"
-	urlMap["ghi"] = "lce0i.jpg"
-	urlMap["jkl"] = "hJ6Sx.jpg"
-	urlMap["mno"] = "w3naz.jpg"
-	urlMap["pqr"] = "kkyv9.jpg"
-	urlMap["stu"] = "9mlnw.jpg"
-	urlMap["vwx"] = "dSpzF.gif"
-	urlMap["yz"] = "kkyv9.jpg"
 }
 
 func serveImage(res http.ResponseWriter, req *http.Request, params martini.Params) {
