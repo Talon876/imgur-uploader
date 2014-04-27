@@ -58,7 +58,6 @@ func serveImage(res http.ResponseWriter, req *http.Request, params martini.Param
 }
 
 func receiveImage(res http.ResponseWriter, req *http.Request, params martini.Params) {
-	//imageKey := req.Header.Get("X-Mapper-Key")
 
 	if imageKey := req.Header.Get("X-Mapper-Key"); len(imageKey) != 0 {
 		fmt.Println("Found key '" + imageKey + "'")
