@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"github.com/go-martini/martini"
 	"io"
+	"io/ioutil"
 	"net/http"
-	"os"
 )
 
 func main() {
@@ -21,34 +21,24 @@ func main() {
 	m.Run()
 }
 
-func receiveImage(res http.ResponseWriter, req *http.Request, params martini.Params) {
-	fmt.Printf("Uploading %s\n", params["id"])
+func receiveImage(w http.ResponseWriter, req *http.Request, params martini.Params) {
 	file, _, err := req.FormFile("file")
-
-	fmt.Fprintf(res, "/%s.jpg\n", params["id"])
-
-	defer file.Close()
-
 	if err != nil {
-		fmt.Fprintln(res, err)
-		return
+		fmt.Println(err)
 	}
 
-	out, err := os.Create(params["id"] + ".jpg")
+	data, err := ioutil.ReadAll(file)
 	if err != nil {
-		fmt.Fprintf(res, "Failed to open the file for writing")
-		return
+		fmt.Println(err)
 	}
 
-	defer out.Close()
-
-	_, err = io.Copy(out, file)
+	err = ioutil.WriteFile(params["id"]+".jpg", data, 0664)
 	if err != nil {
-		fmt.Print(res, "Couldn't copy: ")
-		fmt.Fprintln(res, err)
+		fmt.Println(err)
 	}
 
-	fmt.Fprintf(res, "File %s.jpg uploaded successfully.", params["id"])
+	fmt.Println("Wrote " + params["id"] + ".jpg")
+	file.Close()
 }
 
 func addMapping(res http.ResponseWriter, req *http.Request, params martini.Params) {
