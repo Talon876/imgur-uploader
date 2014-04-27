@@ -1,6 +1,7 @@
 package main
 
 import (
+	"./uploader"
 	"bytes"
 	"encoding/json"
 	"errors"
@@ -26,6 +27,9 @@ func init() {
 }
 
 func main() {
+	go linkReporter()
+	uploader.Upload("http://localhost/test")
+	doThings()
 	rand.Seed(time.Now().UTC().UnixNano())
 	flag.Parse()
 	fmt.Println("Starting imgur mapping server...")
@@ -110,15 +114,14 @@ func receiveImage(res http.ResponseWriter, req *http.Request, params martini.Par
 	file.Close()
 
 	fmt.Println("Saved " + params["id"] + ".jpg")
-	imgurResponse, err := sendToImgur(params["id"])
-	if err != nil {
-		fmt.Println("Failed to upload to imgur")
-		http.Redirect(res, req, "/img/"+params["id"], http.StatusTemporaryRedirect)
-	}
-	fmt.Println(params["id"] + " -> " + imgurResponse.Data.Link)
-	//http.Redirect(res, req, imgurResponse.Data.Link, http.StatusTemporaryRedirect)
-	res.Write([]byte(imgurResponse.Data.Link))
-
+	go sendToImgur(params["id"])
+	//	if err != nil {
+	//		fmt.Println("Failed to upload to imgur")
+	//		http.Redirect(res, req, "/img/"+params["id"], http.StatusTemporaryRedirect)
+	//	}
+	//	fmt.Println(params["id"] + " -> " + imgurResponse.Data.Link)
+	//	http.Redirect(res, req, "/img/"+params["id"], http.StatusTemporaryRedirect)
+	res.Write([]byte("/img/" + params["id"] + ".jpg"))
 }
 
 func sendToImgur(imageId string) (*ImgurResponse, error) {
@@ -179,8 +182,13 @@ func sendToImgur(imageId string) (*ImgurResponse, error) {
 	err = json.Unmarshal(body, &imgurResponse)
 	if err != nil {
 		fmt.Println("Couldn't decode json response from imgur: " + string(body))
+		return nil, errors.New("imgur json error")
 	}
-	fmt.Println("Done uploading " + imageId)
+	if !imgurResponse.Success {
+		fmt.Println("error received from imgur: " + imgurResponse.Error)
+		return nil, errors.New("imgur error")
+	}
+	linkCh <- imgurResponse.Data.Link
 	return &imgurResponse, nil
 }
 
@@ -192,6 +200,18 @@ func generateImageId(length int) string {
 	return string(generatedId)
 }
 
+func linkReporter() {
+	linkCh = make(chan string)
+	fmt.Println("Started link reporting")
+	for {
+		fmt.Println("Waiting for links...")
+		link := <-linkCh
+		fmt.Println("New Image at: " + link)
+	}
+}
+
+var linkCh chan string
+
 var UrlCharacters = []byte("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789")
 
 const (
@@ -201,7 +221,9 @@ const (
 )
 
 type ImgurResponse struct {
-	Data *ImgurData
+	Data    *ImgurData
+	Success bool
+	Error   string
 }
 
 type ImgurData struct {
