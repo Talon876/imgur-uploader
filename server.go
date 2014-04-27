@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"math/rand"
 	"mime/multipart"
 	"net/http"
@@ -27,16 +28,15 @@ func init() {
 }
 
 func main() {
+	log.SetPrefix("[imgur-mapper] ")
 	go linkReporter()
 	uploader.Upload("http://localhost/test")
-	doThings()
 	rand.Seed(time.Now().UTC().UnixNano())
 	flag.Parse()
-	fmt.Println("Starting imgur mapping server...")
-	fmt.Println("Using api key: " + imgurKey)
+	log.Println("Starting imgur mapping service")
+	log.Println("Using v3 imgur api key " + imgurKey)
 	m := martini.Classic()
 	m.Use(martini.Static("assets"))
-	//m.Get("/", displayHelp)
 
 	m.Get("/id", reserveRandomId)
 	m.Get("/id/:id", reserveId)
@@ -44,27 +44,18 @@ func main() {
 	m.Get("/img/:id", serveImage)
 	m.Post("/img/:id", receiveImage)
 
-	fmt.Printf("Listening on :%d\n", port)
+	log.Printf("Listening on :%d\n", port)
 	http.ListenAndServe(fmt.Sprintf(":%d", port), m)
 }
 
-func displayHelp(params martini.Params) (int, string) {
-	data, err := ioutil.ReadFile("help.txt")
-	if err != nil {
-		fmt.Println(err)
-		return 404, "error getting help file"
-	}
-	return 200, string(data)
-}
-
 func reserveRandomId() string {
-	generatedId, generatedPassword := generateImageId(ID_LENGTH), generateImageId(ID_LENGTH*2)
+	generatedId, generatedPassword := NewIdPair()
 	fmt.Printf("Generated id:key combo; %s:%s\n", generatedId, generatedPassword)
 	return fmt.Sprintf("%s:%s", generatedId, generatedPassword)
 }
 
 func reserveId(params martini.Params) (int, string) {
-	reservedId, generatedPassword := params["id"], generateImageId(ID_LENGTH*2)
+	reservedId, generatedPassword := params["id"], NewIdPassword()
 	fmt.Printf("Generated id:key combo; %s:%s\n", reservedId, generatedPassword)
 	return 200, fmt.Sprintf("%s:%s", reservedId, generatedPassword)
 }
@@ -192,14 +183,6 @@ func sendToImgur(imageId string) (*ImgurResponse, error) {
 	return &imgurResponse, nil
 }
 
-func generateImageId(length int) string {
-	generatedId := make([]byte, length)
-	for i := 0; i < length; i++ {
-		generatedId[i] = UrlCharacters[rand.Intn(len(UrlCharacters))]
-	}
-	return string(generatedId)
-}
-
 func linkReporter() {
 	linkCh = make(chan string)
 	fmt.Println("Started link reporting")
@@ -212,10 +195,7 @@ func linkReporter() {
 
 var linkCh chan string
 
-var UrlCharacters = []byte("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789")
-
 const (
-	ID_LENGTH            = 8
 	IMGUR_API_ENDPOINT   = "https://api.imgur.com/3/image"
 	MAX_IMAGE_SIZE_BYTES = 1024 * 5
 )
