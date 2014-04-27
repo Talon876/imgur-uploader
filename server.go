@@ -47,13 +47,27 @@ func reserveId(params martini.Params) (int, string) {
 	return 200, fmt.Sprintf("%s:%s", reservedId, generatedPassword)
 }
 
-func serveImage(res http.ResponseWriter, req *http.Request, params martini.Params) {
+func serveImage(res http.ResponseWriter, req *http.Request, params martini.Params) (int, []byte) {
 	imageId := params["id"]
-	fmt.Printf("Mapped %s -> %s\n", imageId, urlMap[imageId])
-	http.Redirect(res, req, "http://i.imgur.com/"+urlMap[imageId], http.StatusMovedPermanently)
+	data, err := ioutil.ReadFile(imageId + ".jpg")
+	if err != nil {
+		fmt.Println(err)
+		return 404, []byte("error loading the " + imageId + " image")
+	}
+	return 200, data
 }
 
 func receiveImage(res http.ResponseWriter, req *http.Request, params martini.Params) {
+	//imageKey := req.Header.Get("X-Mapper-Key")
+
+	if imageKey := req.Header.Get("X-Mapper-Key"); len(imageKey) != 0 {
+		fmt.Println("Found key '" + imageKey + "'")
+	} else {
+		fmt.Println("Could not find required key")
+		res.Write([]byte("Could not find required X-Mapper-Key header"))
+		return
+	}
+
 	file, _, err := req.FormFile("file")
 	if err != nil {
 		fmt.Println(err)
@@ -71,11 +85,7 @@ func receiveImage(res http.ResponseWriter, req *http.Request, params martini.Par
 	file.Close()
 
 	fmt.Println("Saved " + params["id"] + ".jpg")
-}
-
-func addMapping(res http.ResponseWriter, req *http.Request, params martini.Params) {
-	urlMap[params["from"]] = params["to"]
-	http.Redirect(res, req, "/"+params["from"], http.StatusTemporaryRedirect)
+	http.Redirect(res, req, "/img/"+params["id"], http.StatusTemporaryRedirect)
 }
 
 func generateImageId(length int) string {
@@ -87,8 +97,6 @@ func generateImageId(length int) string {
 }
 
 var UrlCharacters = []byte("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789")
-
-var urlMap = map[string]string{}
 
 const (
 	ID_LENGTH = 8
