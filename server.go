@@ -1,21 +1,22 @@
 package main
 
 import (
-	"crypto/rand"
 	"fmt"
 	"github.com/go-martini/martini"
-	"io"
 	"io/ioutil"
+	"math/rand"
 	"net/http"
+	"time"
 )
 
 func main() {
-	fmt.Printf("Starting imgur server...\n")
+	rand.Seed(time.Now().UTC().UnixNano())
+	fmt.Printf("Starting imgur mapping server...\n")
 	m := martini.Classic()
 	m.Get("/", displayIndex)
 	m.Get("/hello/:name", greetings)
 	m.Get("/:id", serveImage)
-	m.Get("/:from/:to", addMapping)
+	m.Get("/map/:from/:to", addMapping)
 	m.Post("/:id", receiveImage)
 	m.Run()
 }
@@ -52,43 +53,25 @@ func serveImage(res http.ResponseWriter, req *http.Request, params martini.Param
 }
 
 func displayIndex(params martini.Params) string {
-	return generateImageId()
+	return generateImageId(ID_LENGTH)
 }
 
 func greetings(params martini.Params) string {
 	return "Hello " + params["name"]
 }
 
-func generateImageId() string {
-	bytes := make([]byte, URL_LENGTH)
-	randomBytes := make([]byte, 10)
-	maxrb := byte(256 - (256 % len(UrlCharacters)))
-	i := 0
-
-	for {
-		if _, err := io.ReadFull(rand.Reader, randomBytes); err != nil {
-			panic("Error reading from random source: " + err.Error())
-		}
-
-		for _, c := range randomBytes {
-			if c >= maxrb {
-				continue
-			}
-
-			bytes[i] = UrlCharacters[c%byte(len(UrlCharacters))]
-			i++
-			if i == len(bytes) {
-				return string(bytes)
-			}
-		}
+func generateImageId(length int) string {
+	generatedId := make([]byte, length)
+	for i := 0; i < length; i++ {
+		generatedId[i] = UrlCharacters[rand.Intn(len(UrlCharacters))]
 	}
-	return string(randomBytes)
+	return string(generatedId)
 }
 
 var UrlCharacters = []byte("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789")
 
-const (
-	URL_LENGTH = 8
-)
-
 var urlMap = map[string]string{}
+
+const (
+	ID_LENGTH = 8
+)
