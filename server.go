@@ -18,9 +18,11 @@ import (
 )
 
 var imgurKey string
+var port int
 
 func init() {
 	flag.StringVar(&imgurKey, "imgurkey", "ENTERYOURKEY", "Your imgur v3 api client id")
+	flag.IntVar(&port, "port", 3000, "The port to listen on")
 }
 
 func main() {
@@ -38,7 +40,8 @@ func main() {
 	m.Get("/img/:id", serveImage)
 	m.Post("/img/:id", receiveImage)
 
-	m.Run()
+	fmt.Printf("Listening on :%d\n", port)
+	http.ListenAndServe(fmt.Sprintf(":%d", port), m)
 }
 
 func displayHelp(params martini.Params) (int, string) {
