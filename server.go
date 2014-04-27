@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"math/rand"
@@ -10,9 +11,17 @@ import (
 	"github.com/go-martini/martini"
 )
 
+var imgurKey string
+
+func init() {
+	flag.StringVar(&imgurKey, "imgurkey", "ENTERYOURKEY", "Your imgur v3 api client id")
+}
+
 func main() {
 	rand.Seed(time.Now().UTC().UnixNano())
-	fmt.Printf("Starting imgur mapping server...\n")
+	flag.Parse()
+	fmt.Println("Starting imgur mapping server...")
+	fmt.Println("Using api key: " + imgurKey)
 	m := martini.Classic()
 
 	m.Get("/", displayHelp)
@@ -84,7 +93,12 @@ func receiveImage(res http.ResponseWriter, req *http.Request, params martini.Par
 	file.Close()
 
 	fmt.Println("Saved " + params["id"] + ".jpg")
+	sendToImgur(params["id"])
 	http.Redirect(res, req, "/img/"+params["id"], http.StatusTemporaryRedirect)
+}
+
+func sendToImgur(imageId string) {
+
 }
 
 func generateImageId(length int) string {
