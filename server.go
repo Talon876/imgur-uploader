@@ -29,8 +29,8 @@ func main() {
 	fmt.Println("Starting imgur mapping server...")
 	fmt.Println("Using api key: " + imgurKey)
 	m := martini.Classic()
-
-	m.Get("/", displayHelp)
+	m.Use(martini.Static("assets"))
+	//m.Get("/", displayHelp)
 
 	m.Get("/id", reserveRandomId)
 	m.Get("/id/:id", reserveId)
