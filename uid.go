@@ -1,8 +1,11 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"math/rand"
+
+	"github.com/go-martini/martini"
 )
 
 const (
@@ -13,18 +16,18 @@ var UrlCharacters = []byte("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz
 var Symbols = []byte("`~!@#$%^&*()-=_+[]{}?")
 
 //NewId generates a string that is the specified length and contains [A-Za-z0-9]
-func NewId(length int) string {
+func newId(length int) string {
 	return generateString(length, UrlCharacters)
 }
 
-//NewIdKey generates a longer string containing more symbols.
-func NewIdPassword() string {
+//newIdKey generates a longer string containing more symbols.
+func newIdPassword() string {
 	return generateString(ID_LENGTH*2, append(UrlCharacters, Symbols...))
 }
 
-//DefaultId generates a random id and password combination
-func NewIdPair() (string, string) {
-	return NewId(ID_LENGTH), NewIdPassword()
+//newIdPair generates a random id and password combination
+func newIdPair() (string, string) {
+	return newId(ID_LENGTH), newIdPassword()
 }
 
 func generateString(length int, characters []byte) string {
@@ -34,4 +37,14 @@ func generateString(length int, characters []byte) string {
 	}
 	log.Println("Generated: " + string(generatedId))
 	return string(generatedId)
+}
+
+func ReserveRandomId() (int, string) {
+	id, pass := newIdPair()
+	return 200, fmt.Sprintf("%s:%s", id, pass)
+}
+
+func ReserveNamedId(params martini.Params) (int, string) {
+	id, pass := params["id"], newIdPassword()
+	return 200, fmt.Sprintf("%s:%s", id, pass)
 }

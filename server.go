@@ -25,10 +25,10 @@ var port int
 func init() {
 	flag.StringVar(&imgurKey, "imgurkey", "ENTERYOURKEY", "Your imgur v3 api client id")
 	flag.IntVar(&port, "port", 3000, "The port to listen on")
+	log.SetPrefix("[imgur-mapper] ")
 }
 
 func main() {
-	log.SetPrefix("[imgur-mapper] ")
 	go linkReporter()
 	uploader.Upload("http://localhost/test")
 	rand.Seed(time.Now().UTC().UnixNano())
@@ -38,26 +38,14 @@ func main() {
 	m := martini.Classic()
 	m.Use(martini.Static("assets"))
 
-	m.Get("/id", reserveRandomId)
-	m.Get("/id/:id", reserveId)
+	m.Get("/id", ReserveRandomId)
+	m.Get("/id/:id", ReserveNamedId)
 
 	m.Get("/img/:id", serveImage)
 	m.Post("/img/:id", receiveImage)
 
 	log.Printf("Listening on :%d\n", port)
 	http.ListenAndServe(fmt.Sprintf(":%d", port), m)
-}
-
-func reserveRandomId() string {
-	generatedId, generatedPassword := NewIdPair()
-	fmt.Printf("Generated id:key combo; %s:%s\n", generatedId, generatedPassword)
-	return fmt.Sprintf("%s:%s", generatedId, generatedPassword)
-}
-
-func reserveId(params martini.Params) (int, string) {
-	reservedId, generatedPassword := params["id"], NewIdPassword()
-	fmt.Printf("Generated id:key combo; %s:%s\n", reservedId, generatedPassword)
-	return 200, fmt.Sprintf("%s:%s", reservedId, generatedPassword)
 }
 
 func serveImage(res http.ResponseWriter, req *http.Request, params martini.Params) (int, []byte) {
