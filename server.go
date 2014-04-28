@@ -19,8 +19,11 @@ import (
 	"github.com/go-martini/martini"
 )
 
-var imgurKey string
-var port int
+//variables from the command line
+var (
+	imgurKey string
+	port     int
+)
 
 func init() {
 	flag.StringVar(&imgurKey, "imgurkey", "ENTERYOURKEY", "Your imgur v3 api client id")
@@ -115,6 +118,15 @@ func sendToImgur(imageId string) (*ImgurResponse, error) {
 		return nil, errors.New("Couldn't open file " + imageId + ".jpg")
 	}
 
+	fi, err := imageFile.Stat()
+
+	if size := fi.Size(); err != nil || size > MAX_IMAGE_SIZE_BYTES {
+		fmt.Printf("Couldn't upload file. %d is too many bytes.\n", size)
+		return nil, errors.New("File too large to upload")
+	} else {
+		fmt.Printf("%d bytes is allowed\n", size)
+	}
+
 	formWriter, err := imageWriter.CreateFormFile("image", imageId+".jpg")
 	if err != nil {
 		fmt.Println("Couldn't create file form")
@@ -185,7 +197,7 @@ var linkCh chan string
 
 const (
 	IMGUR_API_ENDPOINT   = "https://api.imgur.com/3/image"
-	MAX_IMAGE_SIZE_BYTES = 1024 * 5
+	MAX_IMAGE_SIZE_BYTES = int64(1024 * 1024 * 5)
 )
 
 type ImgurResponse struct {
