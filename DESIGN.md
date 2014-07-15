@@ -10,7 +10,7 @@
 
 ## Available Routes
 
-### GET /:imageid
+### `GET /:imageid`
 
 The primary route end-users will interact with.
 Used for redirecting to the imgur hosted image.
@@ -21,7 +21,7 @@ Used for redirecting to the imgur hosted image.
 404 | somelinkid has no url to redirect to
 	
 
-### POST /image
+### `POST /image`
 
 The route used for actually sending the image to the server.
 This will require obtaining a secret string from `/secret`.
