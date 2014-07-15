@@ -1,8 +1,16 @@
 # Routes
 
-These are the available routes.
+## Client Workflow
 
-## GET /:imageid
+1. Generate random id
+
+2. Use `/secret` to request the secret for the generated id
+
+3. Use `/image` to upload the image for the generated id.
+
+## Available Routes
+
+### GET /:imageid
 
 The primary route end-users will interact with.
 Used for redirecting to the imgur hosted image.
@@ -13,7 +21,7 @@ Used for redirecting to the imgur hosted image.
 404 | somelinkid has no url to redirect to
 	
 
-## POST /image
+### POST /image
 
 The route used for actually sending the image to the server.
 This will require obtaining a secret string from `/secret`.
@@ -33,7 +41,7 @@ image | the image file
 ??? |  invalid image (not an image/too large/etc)
 ??? | invalid secret
 
-## `POST /secret`
+### `POST /secret`
 
 | Key | Value |
 ------|--------
