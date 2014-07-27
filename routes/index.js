@@ -31,3 +31,33 @@ function linkRedirect(res, link) {
 	res.redirect(link.url);
 }
 
+
+exports.addlink = function(req, res){
+	res.form.complete(function(err, fields, files){
+		if(err){
+			next(err);
+		} else{
+			ins = fs.createReadStream(files.photo.path);
+			ous = fs.createWriteStream('/tmp');
+			util.pump(ins, ous, function(err){
+				if(err){
+					next(err);
+				} else{
+					res.redirect('/image');
+				}
+			});
+			console.log('\nUploaded %s to %s', files.photo.filename, files.photo.path);
+			res.send('Uploaded ' + files.photo.filename + ' to ' + files.photo.path);
+		}
+
+	});
+
+}
+
+exports.addlinkForm = function(req, res){
+  res.send('<form method="post" enctype="multipart/form-data">'
+  + '<p>Data: <input type="filename" name="filename" /></p>'
+  + '<p>file: <input type="file" name="image" /></p>'
+  + '<p><input type="submit" value="Upload" /></p>'
+  + '</form>');
+}

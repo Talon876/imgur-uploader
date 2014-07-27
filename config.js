@@ -7,8 +7,7 @@ exports.config = {
 	},
 
 	site:'http://dev.nolat.org/imgurl',
-	port:3000,
-	linkMinLength:18,
-	linkBits:6,
-	topN:10
+	tempDir: '/tmp/images/',
+	maxFileSizeMb: 10,
+	port:3000
 }
